@@ -1,10 +1,9 @@
 ##### Scrape data on Brasilian election
 rm(list=ls())
 gc()
-
-install.packages("rvest")
 library(rvest)
 library(dplyr)
+
 ## These is the main relative path
 relative_url <- "https://eleicoes.poder360.com.br"
 
@@ -39,13 +38,13 @@ data_all_candidates <- as.data.frame(list(Nome_completo =NA,
 # Data in which we store row data to parse into the main data frame
 data_cand <- data_all_candidates
 
-
+##### Only run when code breaks
 data_all_candidates <- read.csv("Data bresil election all.csv")
 
 data_all_candidates <- data_all_candidates[,-1]
 
 # For each of the page
-for(i in 397:397) { ## !!!! If the code breaks
+for(i in 1:397) { ## !!!! If the code breaks
                   ## Replace 1:397 by x:397 where x = to the number of the page printed by the last message
   
   # Take each links in the page
@@ -134,6 +133,9 @@ for(i in 397:397) { ## !!!! If the code breaks
       # print the message to know at which i and j we are
       print(paste("get vote for page", i, "of candate", j, "for election", k, "."))
       
+      # Save the data with the new raw if the code breaks  we can start from where we stopped
+      write.csv(data_all_candidates, "Data bresil election all.csv", fileEncoding = "UTF-8")
+      
       
     }
     
@@ -143,6 +145,6 @@ for(i in 397:397) { ## !!!! If the code breaks
 }
 
 
-write.csv(data_all_candidates, "Data bresil election all.csv", fileEncoding = "UTF-8")
+#### Save data as .dta
 library(haven)
 write_dta(data_all_candidates, path = "Data bresil election all.dta")
