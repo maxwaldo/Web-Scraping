@@ -11,17 +11,20 @@ library(pdftools)
 ###### 1. get the links from the page ##############################
 ####################################################################
 
+## Get main url
 url <- "https://www.bk.admin.ch/ch/f/pore/vi/vis_2_2_5_1.html"
 
-
+## Get all the links for each project
 links <- read_html(url) %>% 
   html_nodes("td") %>% 
   html_nodes("a") %>% 
   html_attr("href")
 
+## Get text infos for each project
 text <- read_html(url) %>% 
   html_nodes("td") %>% 
   html_text()
+
 
 text <- text[-1]
 text <- as.data.frame(text)
@@ -30,6 +33,7 @@ texts <- str_split_fixed(text$text, "\n", 3)
 texts <- as.data.frame(texts)
 texts$V3 <- str_replace(texts$V3, "                     ", "")
 
+## Defines the state of the ballot
 texts <- texts %>% 
   mutate(type = ifelse(substr(V3, 1, 2)=="Ab", "Aboutissement",
                        ifelse(substr(V3, 1, 2)=="Ex", "Examen prelim", 
@@ -44,6 +48,7 @@ texts <- texts %>%
 
 texts$V1 <- links
 
+## Only keep message where signature collections are published in a PDF
 texts <- texts[texts$type=="Aboutissement" |
                  texts$type=="Message" |
                  texts$type=="Arrêté parlement" |
@@ -51,6 +56,7 @@ texts <- texts[texts$type=="Aboutissement" |
 
 texts$link_number <- as.numeric(substr(texts$V1, 4, nchar(texts$V1)-5))
 
+## If older, no PDF published
 texts <- texts[texts$link_number>=274,]
 
 ########## When type is Aboutissement #########
@@ -58,11 +64,12 @@ texts <- texts[texts$link_number>=274,]
 
 ####### Get links for the PDF ######
 
+# Defines two variable to fill with the next loop
 texts$Links_PDF <- NA
 texts$Name_vot <- NA
 
 
-
+# Get the links for the PDF and names of the ballots
 for (i in 1:86) {
   
   url <- paste0("https://www.bk.admin.ch/ch/f/pore/vi/", texts[i,]$V1)
@@ -112,6 +119,7 @@ data_PDF <- as.data.frame(list(Canton = NA,
                                date=NA))
 
 
+# Gets the tables in the PDF that list the number fo signature by canton
 for (i in 1:86) {
   url <- paste0("https://www.bk.admin.ch/ch/f/pore/vi/", texts[i,]$V1)
   name <- read_html(url) %>% 
@@ -158,7 +166,7 @@ for (i in 1:86) {
 }
 
 
-
+# Recode the cantons (Particularly Unterwald le-haut and le-bas)
 data_PDF <- data_PDF %>% 
   mutate(canton_names = ifelse(substr(Canton, 1, 6)=="Zurich", "Zurich", 
                                ifelse(substr(Canton, 1, 5)=="Berne", "Berne",
@@ -189,7 +197,7 @@ data_PDF <- data_PDF %>%
 
 
 
-
+## Drop observations that were added for unknown reason. 
 data_PDF2 <- data_PDF[is.na(data_PDF$canton_names)==F,]
 
 
